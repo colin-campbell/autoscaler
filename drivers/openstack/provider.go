@@ -5,6 +5,7 @@
 package openstack
 
 import (
+	"github.com/pkg/errors"
 	"sync"
 	"text/template"
 
@@ -18,24 +19,49 @@ import (
 type provider struct {
 	init sync.Once
 
-	key      string
-	region   string
-	image    string
-	flavor   string
-	subnet   string
-	pool     string
-	userdata *template.Template
-	groups   []string
-	metadata map[string]string
+	key             string
+	region          string
+	zone            []string
+	image           string
+	flavor          string
+	subnet          string
+	pool            string
+	networkType     string
+	networkId       string
+	usePreAllocated bool
+	userdata        *template.Template
+	groups          []string
+	metadata        map[string]string
 
+	floatingIps   map[string]interface{}
+	networkClient *gophercloud.ServiceClient
 	computeClient *gophercloud.ServiceClient
 }
 
 // New returns a new OpenStack provider.
 func New(opts ...Option) (autoscaler.Provider, error) {
+	var err error
+	var authOpts gophercloud.AuthOptions
+	var endpointOpts gophercloud.EndpointOpts
+	var authClient *gophercloud.ProviderClient
 	p := new(provider)
+
 	for _, opt := range opts {
 		opt(p)
+	}
+
+	if p.region == "" {
+		endpointOpts.Region = p.region
+	}
+
+	authOpts, err = openstack.AuthOptionsFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	authClient, err = openstack.AuthenticatedClient(authOpts)
+	if err != nil {
+		return nil, err
 	}
 
 	if p.userdata == nil {
@@ -43,19 +69,25 @@ func New(opts ...Option) (autoscaler.Provider, error) {
 	}
 
 	if p.computeClient == nil {
-		authOpts, err := openstack.AuthOptionsFromEnv()
+		p.computeClient, err = openstack.NewComputeV2(authClient, endpointOpts)
 		if err != nil {
 			return nil, err
 		}
+	}
 
-		authClient, err := openstack.AuthenticatedClient(authOpts)
-		if err != nil {
-			return nil, err
-		}
+	if p.networkType == "" {
+		p.networkType = "neutron"
+	} else if p.networkType != "nova" && p.networkType != "neutron" {
+		return nil,
+			errors.New("unsupported network type (\"neutron\" or \"nova\". Default: \"neutron\")")
+	}
 
-		p.computeClient, err = openstack.NewComputeV2(authClient, gophercloud.EndpointOpts{
-			Region: p.region,
-		})
+	if p.networkType == "neutron" && p.networkId == "" {
+		return nil, errors.New("external network id must be set for neutron networking")
+	}
+
+	if p.networkClient == nil && p.networkType == "neutron" {
+		p.networkClient, err = openstack.NewNetworkV2(authClient, endpointOpts)
 		if err != nil {
 			return nil, err
 		}

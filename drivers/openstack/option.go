@@ -26,10 +26,38 @@ func WithRegion(region string) Option {
 	}
 }
 
+// WithAvailabilityZone returns an option to set the OpenStack availability zone.
+func WithAvailabilityZone(zone string) Option {
+	return func(p *provider) {
+		p.zone = zone
+	}
+}
+
 // WithFlavor returns an option to set the instance flavor.
 func WithFlavor(flavor string) Option {
 	return func(p *provider) {
 		p.flavor = flavor
+	}
+}
+
+// WithNetworkType returns an option to set the OpenStack networking type.
+func WithNetworkType(networkType string) Option {
+	return func(p *provider) {
+		p.networkType = networkType
+	}
+}
+
+// WithNetworkId returns an option to set the OpenStack network id.
+func WithNetworkId(id string) Option {
+	return func(p *provider) {
+		p.networkId = id
+	}
+}
+
+// WithUsePreallocated returns an option to use preallocated ip addresses.
+func WithUsePreAllocated(usePreAllocated bool) Option {
+	return func(p *provider) {
+		p.usePreAllocated = usePreAllocated
 	}
 }
 
@@ -39,8 +67,17 @@ func WithSecurityGroup(group ...string) Option {
 		p.groups = group
 	}
 }
+
+// WithNetworkClient returns an option to set the
+// GopherCloud network ServiceClient.
+func WithNetworkClient(networkClient *gophercloud.ServiceClient) Option {
+	return func(p *provider) {
+		p.networkClient = networkClient
+	}
+}
+
 // WithComputeClient returns an option to set the
-// GopherCloud ServiceClient.
+// GopherCloud compute ServiceClient.
 func WithComputeClient(computeClient *gophercloud.ServiceClient) Option {
 	return func(p *provider) {
 		p.computeClient = computeClient

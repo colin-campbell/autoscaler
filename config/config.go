@@ -138,15 +138,19 @@ type (
 		}
 
 		OpenStack struct {
-			Region        string `envconfig:"OS_REGION_NAME"`
-			Image         string
-			Flavor        string
-			Pool          string   `envconfig:"DRONE_OPENSTACK_IP_POOL"`
-			SecurityGroup []string `split_words:"true"`
-			SSHKey        string
-			Metadata      map[string]string
-			UserData      string `envconfig:"DRONE_OPENSTACK_USERDATA"`
-			UserDataFile  string `envconfig:"DRONE_OPENSTACK_USERDATA_FILE"`
+			Image            string
+			Region           string `envconfig:"OS_REGION_NAME"`
+			AvailabilityZone string
+			Flavor           string
+			NetworkType      string
+			NetworkId        string
+			Pool             string   `envconfig:"DRONE_OPENSTACK_IP_POOL"`
+			UsePreAllocated  string   `envconfig:"DRONE_OPENSTACK_IP_PREALLOCATED"`
+			SecurityGroup    []string `split_words:"true"`
+			SSHKey           string
+			Metadata         map[string]string
+			UserData         string `envconfig:"DRONE_OPENSTACK_USERDATA"`
+			UserDataFile     string `envconfig:"DRONE_OPENSTACK_USERDATA_FILE"`
 		}
 	}
 )

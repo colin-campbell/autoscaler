@@ -26,10 +26,8 @@ func (p *provider) Create(ctx context.Context, opts autoscaler.InstanceCreateOpt
 	if err != nil {
 		return nil, err
 	}
-	// Make a floating ip to attach.
-	ip, err := floatingips.Create(p.computeClient, floatingips.CreateOpts{
-		Pool: p.pool,
-	}).Extract()
+	// Get a floating ip to attach.
+	ip, err := getFloatingIP(p)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +47,7 @@ func (p *provider) Create(ctx context.Context, opts autoscaler.InstanceCreateOpt
 	}
 	server, err := servers.Create(p.computeClient, createOpts).Extract()
 	if err != nil {
-		floatingips.Delete(p.computeClient, ip.ID)
+		_ = FloatingIP.release()
 		return nil, err
 	}
 	logger := log.Ctx(ctx).With().

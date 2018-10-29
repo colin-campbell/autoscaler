@@ -28,7 +28,7 @@ func (p *provider) Destroy(ctx context.Context, instance *autoscaler.Instance) e
 
 	err := servers.Delete(p.computeClient, instance.ID).ExtractErr()
 	if err == nil {
-		logger.Debug().
+			logger.Debug().
 			Msg("instance deleted")
 		return nil
 	}
